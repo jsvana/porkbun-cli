@@ -16,7 +16,7 @@ cargo test               # Run tests (none currently)
 
 A CLI for the Porkbun DNS API (https://porkbun.com/api/json/v3/documentation). Single-binary, single-file Rust project.
 
-**Auth:** Requires `PORKBUN_API_KEY` and `PORKBUN_SECRET_API_KEY` env vars (or `--api-key`/`--secret-key` flags).
+**Auth:** Reads `api_key` and `secret_key` from `~/.config/porkbun-cli/config.toml`.
 
 ## Architecture
 

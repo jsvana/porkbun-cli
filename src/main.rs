@@ -1,20 +1,37 @@
+use std::path::PathBuf;
+
 use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
-use tabled::{Table, Tabled};
 
 const BASE_URL: &str = "https://api.porkbun.com/api/json/v3";
+
+#[derive(Deserialize)]
+struct Config {
+    api_key: String,
+    secret_key: String,
+}
+
+fn config_path() -> PathBuf {
+    dirs::config_dir()
+        .unwrap_or_else(|| PathBuf::from("~/.config"))
+        .join("porkbun-cli")
+        .join("config.toml")
+}
+
+fn load_config() -> Result<Config> {
+    let path = config_path();
+    let contents = std::fs::read_to_string(&path)
+        .with_context(|| format!("Failed to read config file at {}", path.display()))?;
+    toml::from_str(&contents).with_context(|| format!("Failed to parse {}", path.display()))
+}
 
 #[derive(Parser)]
 #[command(name = "porkbun", about = "CLI for managing Porkbun DNS records")]
 struct Cli {
-    /// Porkbun API key (or set PORKBUN_API_KEY)
-    #[arg(long, env = "PORKBUN_API_KEY")]
-    api_key: String,
-
-    /// Porkbun secret API key (or set PORKBUN_SECRET_API_KEY)
-    #[arg(long, env = "PORKBUN_SECRET_API_KEY")]
-    secret_key: String,
+    /// Print column headers before list output
+    #[arg(long)]
+    headers: bool,
 
     #[command(subcommand)]
     command: Command,
@@ -152,18 +169,6 @@ struct DomainInfo {
     create_date: String,
 }
 
-#[derive(Tabled)]
-struct DomainRow {
-    #[tabled(rename = "Domain")]
-    domain: String,
-    #[tabled(rename = "Status")]
-    status: String,
-    #[tabled(rename = "Created")]
-    created: String,
-    #[tabled(rename = "Expires")]
-    expires: String,
-}
-
 #[derive(Deserialize)]
 struct DnsListResponse {
     status: String,
@@ -181,28 +186,6 @@ struct DnsRecord {
     record_type: String,
     content: String,
     ttl: String,
-    #[serde(default)]
-    prio: Option<String>,
-    #[serde(default)]
-    notes: Option<String>,
-}
-
-#[derive(Tabled)]
-struct DnsRow {
-    #[tabled(rename = "ID")]
-    id: String,
-    #[tabled(rename = "Name")]
-    name: String,
-    #[tabled(rename = "Type")]
-    record_type: String,
-    #[tabled(rename = "Content")]
-    content: String,
-    #[tabled(rename = "TTL")]
-    ttl: String,
-    #[tabled(rename = "Prio")]
-    prio: String,
-    #[tabled(rename = "Notes")]
-    notes: String,
 }
 
 #[derive(Deserialize)]
@@ -228,9 +211,11 @@ fn check_status(status: &str, message: &Option<String>) -> Result<()> {
 async fn main() -> Result<()> {
     let cli = Cli::parse();
     let client = reqwest::Client::new();
+
+    let config = load_config()?;
     let auth = Auth {
-        apikey: cli.api_key.clone(),
-        secretapikey: cli.secret_key.clone(),
+        apikey: config.api_key,
+        secretapikey: config.secret_key,
     };
 
     match cli.command {
@@ -246,23 +231,12 @@ async fn main() -> Result<()> {
 
             check_status(&resp.status, &resp.message)?;
 
-            if resp.domains.is_empty() {
-                println!("No domains found.");
-                return Ok(());
+            if cli.headers {
+                println!("DOMAIN\tSTATUS\tCREATED\tEXPIRES");
             }
-
-            let rows: Vec<DomainRow> = resp
-                .domains
-                .into_iter()
-                .map(|d| DomainRow {
-                    domain: d.domain,
-                    status: d.status,
-                    created: d.create_date,
-                    expires: d.expire_date,
-                })
-                .collect();
-
-            println!("{}", Table::new(rows));
+            for d in resp.domains {
+                println!("{}\t{}\t{}\t{}", d.domain, d.status, d.create_date, d.expire_date);
+            }
         }
 
         Command::Dns { action } => match action {
@@ -278,13 +252,15 @@ async fn main() -> Result<()> {
 
                 check_status(&resp.status, &resp.message)?;
 
-                if resp.records.is_empty() {
-                    println!("No DNS records found for {domain}.");
-                    return Ok(());
+                if cli.headers {
+                    println!("ID\tNAME\tTYPE\tCONTENT\tTTL");
                 }
-
-                let rows: Vec<DnsRow> = resp.records.into_iter().map(dns_row).collect();
-                println!("{}", Table::new(rows));
+                for r in resp.records {
+                    println!(
+                        "{}\t{}\t{}\t{}\t{}",
+                        r.id, r.name, r.record_type, r.content, r.ttl,
+                    );
+                }
             }
 
             DnsAction::Create {
@@ -405,14 +381,3 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn dns_row(r: DnsRecord) -> DnsRow {
-    DnsRow {
-        id: r.id,
-        name: r.name,
-        record_type: r.record_type,
-        content: r.content,
-        ttl: r.ttl,
-        prio: r.prio.unwrap_or_default(),
-        notes: r.notes.unwrap_or_default(),
-    }
-}
