@@ -63,6 +63,7 @@ This repo includes a [Claude Code](https://claude.ai/code) skill at `.claude/ski
 
 To install it globally (so Claude can use it from any project):
 
-```bash
-cp -r .claude/skills/porkbun-dns ~/.claude/skills/
+```
+/plugin marketplace add jsvana/porkbun-cli
+/plugin install porkbun-dns@jsvana/porkbun-cli
 ```
