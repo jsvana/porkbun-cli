@@ -1,0 +1,10 @@
+{
+  "name": "porkbun-dns",
+  "description": "Porkbun DNS management skill for Claude Code",
+  "version": "1.0.0",
+  "author": {
+    "name": "jsvana"
+  },
+  "repository": "https://github.com/jsvana/porkbun-cli",
+  "license": "MIT"
+}

@@ -57,13 +57,13 @@ porkbun-cli --headers dns list example.com
 cargo build --release
 ```
 
-## Claude Code Skill
+## Claude Code Plugin
 
-This repo includes a [Claude Code](https://claude.ai/code) skill at `.claude/skills/porkbun-dns/` that teaches Claude how to use the CLI for DNS management. It is automatically available when working in this repo.
+This repo includes a [Claude Code](https://claude.ai/code) plugin with a `porkbun-dns` skill that teaches Claude how to manage DNS records via the CLI.
 
-To install it globally (so Claude can use it from any project):
+To install:
 
 ```
 /plugin marketplace add jsvana/porkbun-cli
-/plugin install porkbun-dns@jsvana/porkbun-cli
+/plugin install porkbun-dns@porkbun-cli
 ```

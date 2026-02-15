@@ -1,0 +1,16 @@
+{
+  "name": "porkbun-cli",
+  "owner": {
+    "name": "jsvana"
+  },
+  "metadata": {
+    "description": "Porkbun DNS management skill for Claude Code"
+  },
+  "plugins": [
+    {
+      "name": "porkbun-dns",
+      "source": "..",
+      "description": "Teaches Claude how to manage DNS records and domains via the porkbun-cli tool"
+    }
+  ]
+}
