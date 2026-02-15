@@ -2,14 +2,18 @@
 
 A command-line tool for managing DNS records and domains via the Porkbun API.
 
-## Usage
+## Configuration
 
-Set your API credentials:
+Create `~/.config/porkbun-cli/config.toml` with your API credentials:
 
-```bash
-export PORKBUN_API_KEY="pk1_..."
-export PORKBUN_SECRET_API_KEY="sk1_..."
+```toml
+api_key = "pk1_..."
+secret_key = "sk1_..."
 ```
+
+Each domain must have API access enabled in the [Porkbun dashboard](https://porkbun.com/account/domainsSpe498702).
+
+## Usage
 
 List domains:
 
@@ -41,8 +45,24 @@ Delete a record:
 porkbun-cli dns delete example.com 123456789
 ```
 
+Use `--headers` before the subcommand to print column headers:
+
+```bash
+porkbun-cli --headers dns list example.com
+```
+
 ## Building
 
 ```bash
 cargo build --release
+```
+
+## Claude Code Skill
+
+This repo includes a [Claude Code](https://claude.ai/code) skill at `.claude/skills/porkbun-dns/` that teaches Claude how to use the CLI for DNS management. It is automatically available when working in this repo.
+
+To install it globally (so Claude can use it from any project):
+
+```bash
+cp -r .claude/skills/porkbun-dns ~/.claude/skills/
 ```
